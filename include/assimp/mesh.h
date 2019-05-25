@@ -3,7 +3,7 @@
 Open Asset Import Library (assimp)
 ---------------------------------------------------------------------------
 
-Copyright (c) 2006-2019, assimp team
+Copyright (c) 2006-2018, assimp team
 
 
 All rights reserved.
@@ -402,7 +402,7 @@ enum aiPrimitiveType
 
 
 // ---------------------------------------------------------------------------
-/** @brief An AnimMesh is an attachment to an #aiMesh stores per-vertex
+/** @brief NOT CURRENTLY IN USE. An AnimMesh is an attachment to an #aiMesh stores per-vertex
  *  animations for a particular frame.
  *
  *  You may think of an #aiAnimMesh as a `patch` for the host mesh, which
@@ -414,9 +414,6 @@ enum aiPrimitiveType
 */
 struct aiAnimMesh
 {
-    /**Anim Mesh name */
-    C_STRUCT aiString mName;
-
     /** Replacement for aiMesh::mVertices. If this array is non-NULL,
      *  it *must* contain mNumVertices entries. The corresponding
      *  array in the host mesh must be non-NULL as well - animation
@@ -469,10 +466,10 @@ struct aiAnimMesh
     {
         // fixme consider moving this to the ctor initializer list as well
         for( unsigned int a = 0; a < AI_MAX_NUMBER_OF_TEXTURECOORDS; a++){
-            mTextureCoords[a] = nullptr;
+            mTextureCoords[a] = NULL;
         }
         for( unsigned int a = 0; a < AI_MAX_NUMBER_OF_COLOR_SETS; a++) {
-            mColors[a] = nullptr;
+            mColors[a] = NULL;
         }
     }
 
@@ -493,34 +490,34 @@ struct aiAnimMesh
     /** Check whether the anim mesh overrides the vertex positions
      *  of its host mesh*/
     bool HasPositions() const {
-        return mVertices != nullptr;
+        return mVertices != NULL;
     }
 
     /** Check whether the anim mesh overrides the vertex normals
      *  of its host mesh*/
     bool HasNormals() const {
-        return mNormals != nullptr;
+        return mNormals != NULL;
     }
 
     /** Check whether the anim mesh overrides the vertex tangents
      *  and bitangents of its host mesh. As for aiMesh,
      *  tangents and bitangents always go together. */
     bool HasTangentsAndBitangents() const {
-        return mTangents != nullptr;
+        return mTangents != NULL;
     }
 
     /** Check whether the anim mesh overrides a particular
      * set of vertex colors on his host mesh.
      *  @param pIndex 0<index<AI_MAX_NUMBER_OF_COLOR_SETS */
     bool HasVertexColors( unsigned int pIndex) const    {
-        return pIndex >= AI_MAX_NUMBER_OF_COLOR_SETS ? false : mColors[pIndex] != nullptr;
+        return pIndex >= AI_MAX_NUMBER_OF_COLOR_SETS ? false : mColors[pIndex] != NULL;
     }
 
     /** Check whether the anim mesh overrides a particular
      * set of texture coordinates on his host mesh.
      *  @param pIndex 0<index<AI_MAX_NUMBER_OF_TEXTURECOORDS */
     bool HasTextureCoords( unsigned int pIndex) const   {
-        return pIndex >= AI_MAX_NUMBER_OF_TEXTURECOORDS ? false : mTextureCoords[pIndex] != nullptr;
+        return pIndex >= AI_MAX_NUMBER_OF_TEXTURECOORDS ? false : mTextureCoords[pIndex] != NULL;
     }
 
 #endif

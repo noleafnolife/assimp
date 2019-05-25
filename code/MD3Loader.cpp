@@ -3,7 +3,7 @@
 Open Asset Import Library (assimp)
 ---------------------------------------------------------------------------
 
-Copyright (c) 2006-2019, assimp team
+Copyright (c) 2006-2018, assimp team
 
 
 
@@ -258,10 +258,10 @@ bool Q3Shader::LoadSkin(SkinData& fill, const std::string& pFile,IOSystem* io)
             continue;
 
         fill.textures.push_back(SkinData::TextureEntry());
-        SkinData::TextureEntry &entry = fill.textures.back();
+        SkinData::TextureEntry& s = fill.textures.back();
 
-        entry.first  = ss;
-        entry.second = GetNextToken(buff);
+        s.first  = ss;
+        s.second = GetNextToken(buff);
     }
     return true;
 }
@@ -718,7 +718,9 @@ void MD3Importer::ConvertPath(const char* texture_name, const char* header_name,
 
 // ------------------------------------------------------------------------------------------------
 // Imports the given file into the given scene structure.
-void MD3Importer::InternReadFile( const std::string& pFile, aiScene* pScene, IOSystem* pIOHandler) {
+void MD3Importer::InternReadFile( const std::string& pFile,
+    aiScene* pScene, IOSystem* pIOHandler)
+{
     mFile = pFile;
     mScene = pScene;
     mIOHandler = pIOHandler;
@@ -728,13 +730,11 @@ void MD3Importer::InternReadFile( const std::string& pFile, aiScene* pScene, IOS
     std::string::size_type s = mFile.find_last_of("/\\");
     if (s == std::string::npos) {
         s = 0;
-    } else {
-        ++s;
     }
-    filename = mFile.substr(s), path = mFile.substr(0, s);
-    for (std::string::iterator it = filename.begin(); it != filename.end(); ++it) {
-        *it = static_cast<char>( tolower(*it) );
-    }
+    else ++s;
+    filename = mFile.substr(s), path = mFile.substr(0,s);
+    for( std::string::iterator it = filename .begin(); it != filename.end(); ++it)
+        *it = tolower( *it);
 
     // Load multi-part model file, if necessary
     if (configHandleMP) {
@@ -905,15 +905,15 @@ void MD3Importer::InternReadFile( const std::string& pFile, aiScene* pScene, IOS
         // Now search the current shader for a record with this name (
         // excluding texture file extension)
         if (!shaders.blocks.empty()) {
-            std::string::size_type sh = convertedPath.find_last_of('.');
-            if (sh == std::string::npos) {
-                sh = convertedPath.length();
-            }
 
-            const std::string without_ext = convertedPath.substr(0,sh);
+            std::string::size_type s = convertedPath.find_last_of('.');
+            if (s == std::string::npos)
+                s = convertedPath.length();
+
+            const std::string without_ext = convertedPath.substr(0,s);
             std::list< Q3Shader::ShaderDataBlock >::const_iterator dit = std::find(shaders.blocks.begin(),shaders.blocks.end(),without_ext);
             if (dit != shaders.blocks.end()) {
-                // We made it!
+                // Hurra, wir haben einen. Tolle Sache.
                 shader = &*dit;
                 ASSIMP_LOG_INFO("Found shader record for " +without_ext );
             } else {
@@ -945,7 +945,8 @@ void MD3Importer::InternReadFile( const std::string& pFile, aiScene* pScene, IOS
             aiString szString;
             if (convertedPath.length()) {
                 szString.Set(convertedPath);
-            } else    {
+            }
+            else    {
                 ASSIMP_LOG_WARN("Texture file name has zero length. Using default name");
                 szString.Set("dummy_texture.bmp");
             }
@@ -954,7 +955,8 @@ void MD3Importer::InternReadFile( const std::string& pFile, aiScene* pScene, IOS
             // prevent transparency by default
             int no_alpha = aiTextureFlags_IgnoreAlpha;
             pcHelper->AddProperty(&no_alpha,1,AI_MATKEY_TEXFLAGS_DIFFUSE(0));
-        } else {
+        }
+        else {
             Q3Shader::ConvertShaderToMaterial(pcHelper,*shader);
         }
 
@@ -1024,7 +1026,7 @@ void MD3Importer::InternReadFile( const std::string& pFile, aiScene* pScene, IOS
             if (!shader || shader->cull == Q3Shader::CULL_CW) {
                 std::swap(pcMesh->mFaces[i].mIndices[2],pcMesh->mFaces[i].mIndices[1]);
             }
-            ++pcTriangles;
+            pcTriangles++;
         }
 
         // Go to the next surface
@@ -1040,9 +1042,8 @@ void MD3Importer::InternReadFile( const std::string& pFile, aiScene* pScene, IOS
         }
     }
 
-    if (!pScene->mNumMeshes) {
+    if (!pScene->mNumMeshes)
         throw DeadlyImportError( "MD3: File contains no valid mesh");
-    }
     pScene->mNumMaterials = iNumMaterials;
 
     // Now we need to generate an empty node graph
@@ -1056,6 +1057,7 @@ void MD3Importer::InternReadFile( const std::string& pFile, aiScene* pScene, IOS
         pScene->mRootNode->mChildren = new aiNode*[pcHeader->NUM_TAGS];
 
         for (unsigned int i = 0; i < pcHeader->NUM_TAGS; ++i, ++pcTags) {
+
             aiNode* nd = pScene->mRootNode->mChildren[i] = new aiNode();
             nd->mName.Set((const char*)pcTags->NAME);
             nd->mParent = pScene->mRootNode;
@@ -1083,12 +1085,8 @@ void MD3Importer::InternReadFile( const std::string& pFile, aiScene* pScene, IOS
         pScene->mRootNode->mMeshes[i] = i;
 
     // Now rotate the whole scene 90 degrees around the x axis to convert to internal coordinate system
-    pScene->mRootNode->mTransformation = aiMatrix4x4(
-        1.f,0.f,0.f,0.f,
-        0.f,0.f,1.f,0.f,
-        0.f,-1.f,0.f,0.f,
-        0.f,0.f,0.f,1.f
-    );
+    pScene->mRootNode->mTransformation = aiMatrix4x4(1.f,0.f,0.f,0.f,
+        0.f,0.f,1.f,0.f,0.f,-1.f,0.f,0.f,0.f,0.f,0.f,1.f);
 }
 
 #endif // !! ASSIMP_BUILD_NO_MD3_IMPORTER

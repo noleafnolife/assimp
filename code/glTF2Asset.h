@@ -2,7 +2,7 @@
 Open Asset Import Library (assimp)
 ----------------------------------------------------------------------
 
-Copyright (c) 2006-2019, assimp team
+Copyright (c) 2006-2018, assimp team
 
 
 All rights reserved.
@@ -223,8 +223,7 @@ namespace glTF2
         ComponentType_FLOAT = 5126
     };
 
-    inline
-    unsigned int ComponentTypeSize(ComponentType t)
+    inline unsigned int ComponentTypeSize(ComponentType t)
     {
         switch (t) {
             case ComponentType_SHORT:
@@ -251,7 +250,7 @@ namespace glTF2
     };
 
     //! Values for the Sampler::magFilter field
-    enum class SamplerMagFilter : unsigned int
+    enum class SamplerMagFilter: unsigned int
     {
         UNSET = 0,
         SamplerMagFilter_Nearest = 9728,
@@ -259,7 +258,7 @@ namespace glTF2
     };
 
     //! Values for the Sampler::minFilter field
-    enum class SamplerMinFilter : unsigned int
+    enum class SamplerMinFilter: unsigned int
     {
         UNSET = 0,
         SamplerMinFilter_Nearest = 9728,
@@ -431,9 +430,9 @@ namespace glTF2
     struct Accessor : public Object
     {
         Ref<BufferView> bufferView;  //!< The ID of the bufferView. (required)
-        size_t byteOffset;           //!< The offset relative to the start of the bufferView in bytes. (required)
+        unsigned int byteOffset;     //!< The offset relative to the start of the bufferView in bytes. (required)
         ComponentType componentType; //!< The datatype of components in the attribute. (required)
-        size_t count;                //!< The number of attributes referenced by this accessor. (required)
+        unsigned int count;          //!< The number of attributes referenced by this accessor. (required)
         AttribType::Value type;      //!< Specifies if the attribute is a scalar, vector, or matrix. (required)
         std::vector<float> max;      //!< Maximum value of each component in this attribute.
         std::vector<float> min;      //!< Minimum value of each component in this attribute.
@@ -530,7 +529,6 @@ namespace glTF2
 		//std::string uri; //!< The uri of the buffer. Can be a filepath, a data uri, etc. (required)
 		size_t byteLength; //!< The length of the buffer in bytes. (default: 0)
 		//std::string type; //!< XMLHttpRequest responseType (default: "arraybuffer")
-        size_t capacity = 0; //!< The capacity of the buffer in bytes. (default: 0)
 
 		Type type;
 
@@ -658,11 +656,7 @@ namespace glTF2
             } ortographic;
         } cameraProperties;
 
-        Camera()
-        : type(Perspective)
-        , cameraProperties() {
-            // empty
-        }
+        Camera() {}
         void Read(Value& obj, Asset& r);
     };
 

@@ -2,7 +2,7 @@
 Open Asset Import Library (assimp)
 ----------------------------------------------------------------------
 
-Copyright (c) 2006-2019, assimp team
+Copyright (c) 2006-2012, assimp team
 All rights reserved.
 
 Redistribution and use of this software in source and binary forms,
@@ -48,8 +48,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <assimp/LogAux.h>
 
 #include <map>
-
-// Forward declarations
 struct aiNode;
 struct aiMesh;
 struct aiMaterial;
@@ -63,7 +61,8 @@ namespace melange {
     class BaseShader;
 }
 
-namespace Assimp  {
+namespace Assimp    {
+
     // TinyFormatter.h
     namespace Formatter {
         template <typename T,typename TR, typename A> class basic_formatter;
@@ -76,10 +75,17 @@ namespace Assimp  {
  *
  *  Note that Melange is not free software. */
 // -------------------------------------------------------------------------------------------
-class C4DImporter : public BaseImporter, public LogFunctions<C4DImporter> {
+class C4DImporter : public BaseImporter, public LogFunctions<C4DImporter>
+{
 public:
+
     C4DImporter();
     ~C4DImporter();
+
+
+public:
+
+    // --------------------
     bool CanRead( const std::string& pFile, IOSystem* pIOHandler,
         bool checkSig) const;
 
@@ -113,5 +119,5 @@ private:
 }; // !class C4DImporter
 
 } // end of namespace Assimp
-
 #endif // INCLUDED_AI_CINEMA_4D_LOADER_H
+

@@ -139,8 +139,10 @@ public class AiClassLoaderIOSystem implements AiIOSystem<AiInputStreamIOStream>
       {
          return false;
       }
-
-	  return true;
+      else
+      {
+         return true;
+      }
       
    }
 

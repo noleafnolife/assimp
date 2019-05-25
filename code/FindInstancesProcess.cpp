@@ -3,7 +3,7 @@
 Open Asset Import Library (assimp)
 ---------------------------------------------------------------------------
 
-Copyright (c) 2006-2019, assimp team
+Copyright (c) 2006-2018, assimp team
 
 
 
@@ -178,30 +178,30 @@ void FindInstancesProcess::Execute( aiScene* pScene)
                     // use a constant epsilon for colors and UV coordinates
                     static const float uvEpsilon = 10e-4f;
                     {
-                        unsigned int j, end = orig->GetNumUVChannels();
-                        for(j = 0; j < end; ++j) {
-                            if (!orig->mTextureCoords[j]) {
+                        unsigned int i, end = orig->GetNumUVChannels();
+                        for(i = 0; i < end; ++i) {
+                            if (!orig->mTextureCoords[i]) {
                                 continue;
                             }
-                            if(!CompareArrays(orig->mTextureCoords[j],inst->mTextureCoords[j],orig->mNumVertices,uvEpsilon)) {
+                            if(!CompareArrays(orig->mTextureCoords[i],inst->mTextureCoords[i],orig->mNumVertices,uvEpsilon)) {
                                 break;
                             }
                         }
-                        if (j != end) {
+                        if (i != end) {
                             continue;
                         }
                     }
                     {
-                        unsigned int j, end = orig->GetNumColorChannels();
-                        for(j = 0; j < end; ++j) {
-                            if (!orig->mColors[j]) {
+                        unsigned int i, end = orig->GetNumColorChannels();
+                        for(i = 0; i < end; ++i) {
+                            if (!orig->mColors[i]) {
                                 continue;
                             }
-                            if(!CompareArrays(orig->mColors[j],inst->mColors[j],orig->mNumVertices,uvEpsilon)) {
+                            if(!CompareArrays(orig->mColors[i],inst->mColors[i],orig->mNumVertices,uvEpsilon)) {
                                 break;
                             }
                         }
-                        if (j != end) {
+                        if (i != end) {
                             continue;
                         }
                     }

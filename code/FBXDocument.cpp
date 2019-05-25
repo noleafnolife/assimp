@@ -2,7 +2,7 @@
 Open Asset Import Library (assimp)
 ----------------------------------------------------------------------
 
-Copyright (c) 2006-2019, assimp team
+Copyright (c) 2006-2018, assimp team
 
 
 All rights reserved.
@@ -69,7 +69,8 @@ LazyObject::LazyObject(uint64_t id, const Element& element, const Document& doc)
 : doc(doc)
 , element(element)
 , id(id)
-, flags() {
+, flags()
+{
     // empty
 }
 
@@ -83,7 +84,7 @@ LazyObject::~LazyObject()
 const Object* LazyObject::Get(bool dieOnError)
 {
     if(IsBeingConstructed() || FailedToConstruct()) {
-        return nullptr;
+        return NULL;
     }
 
     if (object.get()) {
@@ -145,12 +146,6 @@ const Object* LazyObject::Get(bool dieOnError)
             if (!strcmp(classtag.c_str(),"Mesh")) {
                 object.reset(new MeshGeometry(id,element,name,doc));
             }
-            if (!strcmp(classtag.c_str(), "Shape")) {
-                object.reset(new ShapeGeometry(id, element, name, doc));
-            }
-            if (!strcmp(classtag.c_str(), "Line")) {
-                object.reset(new LineGeometry(id, element, name, doc));
-            }
         }
         else if (!strncmp(obtype,"NodeAttribute",length)) {
             if (!strcmp(classtag.c_str(),"Camera")) {
@@ -175,12 +170,6 @@ const Object* LazyObject::Get(bool dieOnError)
             }
             else if (!strcmp(classtag.c_str(),"Skin")) {
                 object.reset(new Skin(id,element,doc,name));
-            }
-            else if (!strcmp(classtag.c_str(), "BlendShape")) {
-                object.reset(new BlendShape(id, element, doc, name));
-            }
-            else if (!strcmp(classtag.c_str(), "BlendShapeChannel")) {
-                object.reset(new BlendShapeChannel(id, element, doc, name));
             }
         }
         else if ( !strncmp( obtype, "Model", length ) ) {
@@ -552,7 +541,7 @@ const std::vector<const AnimationStack*>& Document::AnimationStacks() const
 LazyObject* Document::GetObject(uint64_t id) const
 {
     ObjectMap::const_iterator it = objects.find(id);
-    return it == objects.end() ? nullptr : (*it).second;
+    return it == objects.end() ? NULL : (*it).second;
 }
 
 #define MAX_CLASSNAMES 6
@@ -609,7 +598,7 @@ std::vector<const Connection*> Document::GetConnectionsSequenced(uint64_t id, bo
         for (size_t i = 0; i < c; ++i) {
             ai_assert(classnames[i]);
             if(static_cast<size_t>(std::distance(key.begin(),key.end())) == lengths[i] && !strncmp(classnames[i],obtype,lengths[i])) {
-                obtype = nullptr;
+                obtype = NULL;
                 break;
             }
         }

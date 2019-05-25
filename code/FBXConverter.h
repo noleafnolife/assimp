@@ -2,7 +2,7 @@
 Open Asset Import Library (assimp)
 ----------------------------------------------------------------------
 
-Copyright (c) 2006-2019, assimp team
+Copyright (c) 2006-2018, assimp team
 
 
 All rights reserved.
@@ -58,40 +58,24 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <assimp/texture.h>
 #include <assimp/camera.h>
 #include <assimp/StringComparison.h>
-#include <unordered_map>
-#include <unordered_set>
 
 struct aiScene;
 struct aiNode;
 struct aiMaterial;
-
-struct morphKeyData {
-    std::vector<unsigned int> values;
-    std::vector<float> weights;
-};
-typedef std::map<int64_t, morphKeyData*> morphAnimData;
 
 namespace Assimp {
 namespace FBX {
 
 class Document;
 
-enum class FbxUnit {
-    cm = 0,
-    m,
-    km,
-    NumUnits,
-
-    Undefined
-};
+using NodeNameCache = std::set<std::string>;
 
 /** 
  *  Convert a FBX #Document to #aiScene
  *  @param out Empty scene to be populated
- *  @param doc Parsed FBX document
- *  @param removeEmptyBones Will remove bones, which do not have any references to vertices.
+ *  @param doc Parsed FBX document 
  */
-void ConvertToAssimpScene(aiScene* out, const Document& doc, bool removeEmptyBones, FbxUnit unit);
+void ConvertToAssimpScene(aiScene* out, const Document& doc);
 
 /** Dummy class to encapsulate the conversion process */
 class FBXConverter {
@@ -122,7 +106,7 @@ public:
     };
 
 public:
-    FBXConverter(aiScene* out, const Document& doc, bool removeEmptyBones, FbxUnit unit);
+    FBXConverter(aiScene* out, const Document& doc);
     ~FBXConverter();
 
 private:
@@ -155,11 +139,6 @@ private:
     const char* NameTransformationComp(TransformationComp comp);
 
     // ------------------------------------------------------------------------------------------------
-    // Returns an unique name for a node or traverses up a hierarchy until a non-empty name is found and
-    // then makes this name unique
-    std::string MakeUniqueNodeName(const Model* const model, const aiNode& parent);
-
-    // ------------------------------------------------------------------------------------------------
     // note: this returns the REAL fbx property names
     const char* NameTransformationCompProperty(TransformationComp comp);
 
@@ -182,25 +161,21 @@ private:
     /**
     *  note: memory for output_nodes will be managed by the caller
     */
-    bool GenerateTransformationNodeChain(const Model& model, const std::string& name, std::vector<aiNode*>& output_nodes, std::vector<aiNode*>& post_output_nodes);
+    void GenerateTransformationNodeChain(const Model& model, std::vector<aiNode*>& output_nodes, std::vector<aiNode*>& post_output_nodes);
 
     // ------------------------------------------------------------------------------------------------
     void SetupNodeMetadata(const Model& model, aiNode& nd);
 
     // ------------------------------------------------------------------------------------------------
     void ConvertModel(const Model& model, aiNode& nd, const aiMatrix4x4& node_global_transform);
-    
+
     // ------------------------------------------------------------------------------------------------
     // MeshGeometry -> aiMesh, return mesh index + 1 or 0 if the conversion failed
     std::vector<unsigned int> ConvertMesh(const MeshGeometry& mesh, const Model& model,
         const aiMatrix4x4& node_global_transform, aiNode& nd);
 
     // ------------------------------------------------------------------------------------------------
-    std::vector<unsigned int> ConvertLine(const LineGeometry& line, const Model& model,
-        const aiMatrix4x4& node_global_transform, aiNode& nd);
-
-    // ------------------------------------------------------------------------------------------------
-    aiMesh* SetupEmptyMesh(const Geometry& mesh, aiNode& nd);
+    aiMesh* SetupEmptyMesh(const MeshGeometry& mesh, aiNode& nd);
 
     // ------------------------------------------------------------------------------------------------
     unsigned int ConvertMeshSingleMaterial(const MeshGeometry& mesh, const Model& model,
@@ -283,7 +258,6 @@ private:
 
     // ------------------------------------------------------------------------------------------------
     void SetShadingPropertiesCommon(aiMaterial* out_mat, const PropertyTable& props);
-    void SetShadingPropertiesRaw(aiMaterial* out_mat, const PropertyTable& props, const TextureMap& textures, const MeshGeometry* const mesh);
 
     // ------------------------------------------------------------------------------------------------
     // get the number of fps for a FrameRate enumerated value
@@ -298,7 +272,6 @@ private:
     // the function is guaranteed to provide consistent results over multiple invocations
     // UNLESS RenameNode() is called for a particular node name.
     std::string FixNodeName(const std::string& name);
-    std::string FixAnimMeshName(const std::string& name);
 
     typedef std::map<const AnimationCurveNode*, const AnimationLayer*> LayerMap;
 
@@ -307,9 +280,6 @@ private:
 
     // ------------------------------------------------------------------------------------------------
     void ConvertAnimationStack(const AnimationStack& st);
-
-    // ------------------------------------------------------------------------------------------------
-    void ProcessMorphAnimDatas(std::map<std::string, morphAnimData*>* morphAnimDatas, const BlendShapeChannel* bsc, const AnimationCurveNode* node);
 
     // ------------------------------------------------------------------------------------------------
     void GenerateNodeAnimations(std::vector<aiNodeAnim*>& node_anims,
@@ -430,14 +400,11 @@ private:
     void ConvertGlobalSettings();
 
     // ------------------------------------------------------------------------------------------------
-    //  Will perform the conversion from a given unit to the requested unit.
-    void ConvertToUnitScale(FbxUnit unit);
-
-    // ------------------------------------------------------------------------------------------------
     // copy generated meshes, animations, lights, cameras and textures to the output scene
     void TransferDataToScene();
 
 private:
+
     // 0: not assigned yet, others: index is value - 1
     unsigned int defaultMaterialIndex;
 
@@ -448,31 +415,24 @@ private:
     std::vector<aiCamera*> cameras;
     std::vector<aiTexture*> textures;
 
-    using MaterialMap = std::map<const Material*, unsigned int>;
+    typedef std::map<const Material*, unsigned int> MaterialMap;
     MaterialMap materials_converted;
 
-    using VideoMap = std::map<const Video*, unsigned int>;
+    typedef std::map<const Video*, unsigned int> VideoMap;
     VideoMap textures_converted;
 
-    using MeshMap = std::map<const Geometry*, std::vector<unsigned int> >;
+    typedef std::map<const Geometry*, std::vector<unsigned int> > MeshMap;
     MeshMap meshes_converted;
 
     // fixed node name -> which trafo chain components have animations?
-    using NodeAnimBitMap = std::map<std::string, unsigned int> ;
+    typedef std::map<std::string, unsigned int> NodeAnimBitMap;
     NodeAnimBitMap node_anim_chain_bits;
 
-    // number of nodes with the same name
-    using NodeNameCache = std::unordered_map<std::string, unsigned int>;
     NodeNameCache mNodeNames;
-
     double anim_fps;
 
     aiScene* const out;
     const FBX::Document& doc;
-
-    bool mRemoveEmptyBones;
-
-    FbxUnit mCurrentUnit;
 };
 
 }

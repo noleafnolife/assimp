@@ -3,7 +3,7 @@
 Open Asset Import Library (assimp)
 ---------------------------------------------------------------------------
 
-Copyright (c) 2006-2019, assimp team
+Copyright (c) 2006-2018, assimp team
 
 
 
@@ -228,7 +228,6 @@ bool FindDegeneratesProcess::ExecuteOnMesh( aiMesh* mesh) {
                     if ( area < 1e-6 ) {
                         if ( mConfigRemoveDegenerates ) {
                             remove_me[ a ] = true;
-                            ++deg;
                             goto evil_jump_outside;
                         }
 

@@ -2,7 +2,7 @@
 Open Asset Import Library (assimp)
 ----------------------------------------------------------------------
 
-Copyright (c) 2006-2019, assimp team
+Copyright (c) 2006-2018, assimp team
 
 
 All rights reserved.
@@ -93,14 +93,6 @@ namespace {
 
     template<class T> struct ReadHelper< Nullable<T> > { static bool Read(Value& val, Nullable<T>& out) {
         return out.isPresent = ReadHelper<T>::Read(val, out.value);
-    }};
-
-    template<> struct ReadHelper<uint64_t> { static bool Read(Value& val, uint64_t& out) {
-        return val.IsUint64() ? out = val.GetUint64(), true : false;
-    }};
-
-    template<> struct ReadHelper<int64_t> { static bool Read(Value& val, int64_t& out) {
-        return val.IsInt64() ? out = val.GetInt64(), true : false;
     }};
 
     template<class T>
@@ -319,7 +311,7 @@ inline void Buffer::Read(Value& obj, Asset& r)
                                         " bytes, but found " + to_string(dataURI.dataLength));
             }
 
-            this->mData.reset(new uint8_t[dataURI.dataLength], std::default_delete<uint8_t[]>());
+            this->mData.reset(new uint8_t[dataURI.dataLength]);
             memcpy( this->mData.get(), dataURI.data, dataURI.dataLength );
         }
     }
@@ -425,7 +417,7 @@ uint8_t* new_data;
 	// Copy data which place after replacing part.
 	memcpy(&new_data[pBufferData_Offset + pReplace_Count], &mData.get()[pBufferData_Offset + pBufferData_Count], pBufferData_Offset);
 	// Apply new data
-	mData.reset(new_data, std::default_delete<uint8_t[]>());
+	mData.reset(new_data);
 	byteLength = new_data_size;
 
 	return true;
@@ -442,19 +434,9 @@ inline size_t Buffer::AppendData(uint8_t* data, size_t length)
 inline void Buffer::Grow(size_t amount)
 {
     if (amount <= 0) return;
-    if (capacity >= byteLength + amount)
-    {
-        byteLength += amount;
-        return;
-    }
-
-    // Shift operation is standard way to divide integer by 2, it doesn't cast it to float back and forth, also works for odd numbers,
-    // originally it would look like: static_cast<size_t>(capacity * 1.5f)
-    capacity = std::max(capacity + (capacity >> 1), byteLength + amount);
-
-    uint8_t* b = new uint8_t[capacity];
+    uint8_t* b = new uint8_t[byteLength + amount];
     if (mData) memcpy(b, mData.get(), byteLength);
-    mData.reset(b, std::default_delete<uint8_t[]>());
+    mData.reset(b);
     byteLength += amount;
 }
 
@@ -1463,7 +1445,7 @@ inline std::string Asset::FindUniqueID(const std::string& str, const char* suffi
     if (it == mUsedIds.end())
         return id;
 
-    char buffer[1024];
+    char buffer[256];
     int offset = ai_snprintf(buffer, sizeof(buffer), "%s_", id.c_str());
     for (int i = 0; it != mUsedIds.end(); ++i) {
         ai_snprintf(buffer + offset, sizeof(buffer) - offset, "%d", i);

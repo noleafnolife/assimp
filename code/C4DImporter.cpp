@@ -2,7 +2,7 @@
 Open Asset Import Library (assimp)
 ----------------------------------------------------------------------
 
-Copyright (c) 2006-2019, assimp team
+Copyright (c) 2006-2012, assimp team
 All rights reserved.
 
 Redistribution and use of this software in source and binary forms,
@@ -68,7 +68,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 using namespace melange;
 
 // overload this function and fill in your own unique data
-void GetWriterInfo(int &id, String &appname) {
+void GetWriterInfo(int &id, String &appname)
+{
     id = 2424226;
     appname = "Open Asset Import Library";
 }
@@ -77,10 +78,7 @@ using namespace Assimp;
 using namespace Assimp::Formatter;
 
 namespace Assimp {
-    template<> const char* LogFunctions<C4DImporter>::Prefix() {
-        static auto prefix = "C4D: ";
-        return prefix;
-    }
+    template<> const std::string LogFunctions<C4DImporter>::log_prefix = "C4D: ";
 }
 
 static const aiImporterDesc desc = {
@@ -99,44 +97,47 @@ static const aiImporterDesc desc = {
 
 // ------------------------------------------------------------------------------------------------
 C4DImporter::C4DImporter()
-: BaseImporter() {
-    // empty
-}
+{}
 
 // ------------------------------------------------------------------------------------------------
-C4DImporter::~C4DImporter() {
-    // empty
-}
+C4DImporter::~C4DImporter()
+{}
 
 // ------------------------------------------------------------------------------------------------
-bool C4DImporter::CanRead( const std::string& pFile, IOSystem* pIOHandler, bool checkSig) const {
+bool C4DImporter::CanRead( const std::string& pFile, IOSystem* pIOHandler, bool checkSig) const
+{
     const std::string& extension = GetExtension(pFile);
     if (extension == "c4d") {
         return true;
-    } else if ((!extension.length() || checkSig) && pIOHandler)   {
-        // TODO
     }
 
+    else if ((!extension.length() || checkSig) && pIOHandler)   {
+        // TODO
+    }
     return false;
 }
 
 // ------------------------------------------------------------------------------------------------
-const aiImporterDesc* C4DImporter::GetInfo () const {
+const aiImporterDesc* C4DImporter::GetInfo () const
+{
     return &desc;
 }
 
 // ------------------------------------------------------------------------------------------------
-void C4DImporter::SetupProperties(const Importer* /*pImp*/) {
+void C4DImporter::SetupProperties(const Importer* /*pImp*/)
+{
     // nothing to be done for the moment
 }
 
 
 // ------------------------------------------------------------------------------------------------
 // Imports the given file into the given scene structure.
-void C4DImporter::InternReadFile( const std::string& pFile, aiScene* pScene, IOSystem* pIOHandler) {
+void C4DImporter::InternReadFile( const std::string& pFile,
+    aiScene* pScene, IOSystem* pIOHandler)
+{
     std::unique_ptr<IOStream> file( pIOHandler->Open( pFile));
 
-    if( file.get() == nullptr ) {
+    if( file.get() == NULL) {
         ThrowException("failed to open file " + pFile);
     }
 
@@ -150,7 +151,7 @@ void C4DImporter::InternReadFile( const std::string& pFile, aiScene* pScene, IOS
 
     // open document first
     BaseDocument* doc = LoadDocument(f, SCENEFILTER_OBJECTS | SCENEFILTER_MATERIALS);
-    if(doc == nullptr ) {
+    if(doc == NULL) {
         ThrowException("failed to read document " + pFile);
     }
 
@@ -159,10 +160,11 @@ void C4DImporter::InternReadFile( const std::string& pFile, aiScene* pScene, IOS
     // first convert all materials
     ReadMaterials(doc->GetFirstMaterial());
 
-    // process C4D scene-graph recursively
+    // process C4D scenegraph recursively
     try {
         RecurseHierarchy(doc->GetFirstObject(), pScene->mRootNode);
-    } catch(...) {
+    }
+    catch(...) {
         for(aiMesh* mesh : meshes) {
             delete mesh;
         }
@@ -199,7 +201,8 @@ void C4DImporter::InternReadFile( const std::string& pFile, aiScene* pScene, IOS
 
 
 // ------------------------------------------------------------------------------------------------
-bool C4DImporter::ReadShader(aiMaterial* out, melange::BaseShader* shader) {
+bool C4DImporter::ReadShader(aiMaterial* out, melange::BaseShader* shader)
+{
     // based on Melange sample code (C4DImportExport.cpp)
     while(shader) {
         if(shader->GetType() == Xlayer) {
@@ -217,12 +220,15 @@ bool C4DImporter::ReadShader(aiMaterial* out, melange::BaseShader* shader) {
             // Ignore the actual layer blending - models for real-time rendering should not
             // use them in a non-trivial way. Just try to find textures that we can apply
             // to the model.
-            while (lsl) {
-                if (lsl->GetType() == TypeFolder) {
+            while (lsl)
+            {
+                if (lsl->GetType() == TypeFolder)
+                {
                     BlendFolder* const folder = dynamic_cast<BlendFolder*>(lsl);
                     LayerShaderLayer *subLsl = dynamic_cast<LayerShaderLayer*>(folder->m_Children.GetObject(0));
 
-                    while (subLsl) {
+                    while (subLsl)
+                    {
                         if (subLsl->GetType() == TypeShader) {
                             BlendShader* const shader = dynamic_cast<BlendShader*>(subLsl);
                             if(ReadShader(out, static_cast<BaseShader*>(shader->m_pLink->GetLink()))) {
@@ -232,7 +238,8 @@ bool C4DImporter::ReadShader(aiMaterial* out, melange::BaseShader* shader) {
 
                         subLsl = subLsl->GetNext();
                     }
-                } else if (lsl->GetType() == TypeShader) {
+                }
+                else if (lsl->GetType() == TypeShader) {
                     BlendShader* const shader = dynamic_cast<BlendShader*>(lsl);
                     if(ReadShader(out, static_cast<BaseShader*>(shader->m_pLink->GetLink()))) {
                         return true;
@@ -241,27 +248,33 @@ bool C4DImporter::ReadShader(aiMaterial* out, melange::BaseShader* shader) {
 
                 lsl = lsl->GetNext();
             }
-        } else if ( shader->GetType() == Xbitmap ) {
+        }
+        else if ( shader->GetType() == Xbitmap )
+        {
             aiString path;
             shader->GetFileName().GetString().GetCString(path.data, MAXLEN-1);
             path.length = ::strlen(path.data);
             out->AddProperty(&path, AI_MATKEY_TEXTURE_DIFFUSE(0));
             return true;
-        } else {
+        }
+        else {
             LogWarn("ignoring shader type: " + std::string(GetObjectTypeName(shader->GetType())));
         }
         shader = shader->GetNext();
     }
-
     return false;
 }
 
+
 // ------------------------------------------------------------------------------------------------
-void C4DImporter::ReadMaterials(melange::BaseMaterial* mat) {
+void C4DImporter::ReadMaterials(melange::BaseMaterial* mat)
+{
     // based on Melange sample code
-    while (mat) {
+    while (mat)
+    {
         const String& name = mat->GetName();
-        if (mat->GetType() == Mmaterial) {
+        if (mat->GetType() == Mmaterial)
+        {
             aiMaterial* out = new aiMaterial();
             material_mapping[mat] = static_cast<unsigned int>(materials.size());
             materials.push_back(out);
@@ -273,7 +286,8 @@ void C4DImporter::ReadMaterials(melange::BaseMaterial* mat) {
 
             Material& m = dynamic_cast<Material&>(*mat);
 
-            if (m.GetChannelState(CHANNEL_COLOR)) {
+            if (m.GetChannelState(CHANNEL_COLOR))
+            {
                 GeData data;
                 mat->GetParameter(MATERIAL_COLOR_COLOR, data);
                 Vector color = data.GetVector();
@@ -293,7 +307,9 @@ void C4DImporter::ReadMaterials(melange::BaseMaterial* mat) {
             if(shader) {
                 ReadShader(out, shader);
             }
-        } else {
+        }
+        else
+        {
             LogWarn("ignoring plugin material: " + std::string(GetObjectTypeName(mat->GetType())));
         }
         mat = mat->GetNext();
@@ -301,12 +317,14 @@ void C4DImporter::ReadMaterials(melange::BaseMaterial* mat) {
 }
 
 // ------------------------------------------------------------------------------------------------
-void C4DImporter::RecurseHierarchy(BaseObject* object, aiNode* parent) {
-    ai_assert(parent != nullptr );
+void C4DImporter::RecurseHierarchy(BaseObject* object, aiNode* parent)
+{
+    ai_assert(parent != NULL);
     std::vector<aiNode*> nodes;
 
     // based on Melange sample code
-    while (object) {
+    while (object)
+    {
         const String& name = object->GetName();
         const LONG type = object->GetType();
         const Matrix& ml = object->GetMl();
@@ -338,20 +356,26 @@ void C4DImporter::RecurseHierarchy(BaseObject* object, aiNode* parent) {
         nodes.push_back(nd);
 
         GeData data;
-        if (type == Ocamera) {
+        if (type == Ocamera)
+        {
             object->GetParameter(CAMERAOBJECT_FOV, data);
             // TODO: read camera
-        } else if (type == Olight) {
+        }
+        else if (type == Olight)
+        {
             // TODO: read light
-        } else if (type == Opolygon) {
+        }
+        else if (type == Opolygon)
+        {
             aiMesh* const mesh = ReadMesh(object);
-            if(mesh != nullptr) {
+            if(mesh != NULL) {
                 nd->mNumMeshes = 1;
                 nd->mMeshes = new unsigned int[1];
                 nd->mMeshes[0] = static_cast<unsigned int>(meshes.size());
                 meshes.push_back(mesh);
             }
-        } else {
+        }
+        else {
             LogWarn("ignoring object: " + std::string(GetObjectTypeName(type)));
         }
 
@@ -365,27 +389,28 @@ void C4DImporter::RecurseHierarchy(BaseObject* object, aiNode* parent) {
     std::copy(nodes.begin(), nodes.end(), parent->mChildren);
 }
 
+
 // ------------------------------------------------------------------------------------------------
-aiMesh* C4DImporter::ReadMesh(BaseObject* object) {
-    ai_assert(object != nullptr);
-    ai_assert( object->GetType() == Opolygon );
+aiMesh* C4DImporter::ReadMesh(BaseObject* object)
+{
+    ai_assert(object != NULL && object->GetType() == Opolygon);
 
     // based on Melange sample code
     PolygonObject* const polyObject = dynamic_cast<PolygonObject*>(object);
-    ai_assert(polyObject != nullptr);
+    ai_assert(polyObject != NULL);
 
     const LONG pointCount = polyObject->GetPointCount();
     const LONG polyCount = polyObject->GetPolygonCount();
     if(!polyObject || !pointCount) {
         LogWarn("ignoring mesh with zero vertices or faces");
-        return nullptr;
+        return NULL;
     }
 
     const Vector* points = polyObject->GetPointR();
-    ai_assert(points != nullptr);
+    ai_assert(points != NULL);
 
     const CPolygon* polys = polyObject->GetPolygonR();
-    ai_assert(polys != nullptr);
+    ai_assert(polys != NULL);
 
     std::unique_ptr<aiMesh> mesh(new aiMesh());
     mesh->mNumFaces = static_cast<unsigned int>(polyCount);
@@ -418,14 +443,14 @@ aiMesh* C4DImporter::ReadMesh(BaseObject* object) {
 
     // check if there are normals, tangents or UVW coordinates
     BaseTag* tag = object->GetTag(Tnormal);
-    NormalTag* normals_src = nullptr;
+    NormalTag* normals_src = NULL;
     if(tag) {
         normals_src = dynamic_cast<NormalTag*>(tag);
         normals = mesh->mNormals = new aiVector3D[mesh->mNumVertices]();
     }
 
     tag = object->GetTag(Ttangent);
-    TangentTag* tangents_src = nullptr;
+    TangentTag* tangents_src = NULL;
     if(tag) {
         tangents_src = dynamic_cast<TangentTag*>(tag);
         tangents = mesh->mTangents = new aiVector3D[mesh->mNumVertices]();
@@ -433,14 +458,15 @@ aiMesh* C4DImporter::ReadMesh(BaseObject* object) {
     }
 
     tag = object->GetTag(Tuvw);
-    UVWTag* uvs_src = nullptr;
+    UVWTag* uvs_src = NULL;
     if(tag) {
         uvs_src = dynamic_cast<UVWTag*>(tag);
         uvs = mesh->mTextureCoords[0] = new aiVector3D[mesh->mNumVertices]();
     }
 
     // copy vertices and extra channels over and populate faces
-    for (LONG i = 0; i < polyCount; ++i, ++face) {
+    for (LONG i = 0; i < polyCount; ++i, ++face)
+    {
         ai_assert(polys[i].a < pointCount && polys[i].a >= 0);
         const Vector& pointA = points[polys[i].a];
         verts->x = pointA.x;
@@ -463,7 +489,8 @@ aiMesh* C4DImporter::ReadMesh(BaseObject* object) {
         ++verts;
 
         // TODO: do we also need to handle lines or points with similar checks?
-        if (polys[i].c != polys[i].d) {
+        if (polys[i].c != polys[i].d)
+        {
             ai_assert(polys[i].d < pointCount && polys[i].d >= 0);
 
             face->mNumIndices = 4;
@@ -473,7 +500,8 @@ aiMesh* C4DImporter::ReadMesh(BaseObject* object) {
             verts->y = pointD.y;
             verts->z = pointD.z;
             ++verts;
-        } else {
+        }
+        else {
             face->mNumIndices = 3;
         }
         face->mIndices = new unsigned int[face->mNumIndices];
@@ -485,7 +513,8 @@ aiMesh* C4DImporter::ReadMesh(BaseObject* object) {
         if (normals_src) {
             if(i >= normals_src->GetDataCount()) {
                 LogError("unexpected number of normals, ignoring");
-            } else {
+            }
+            else {
                 ConstNormalHandle normal_handle = normals_src->GetDataAddressR();
                 NormalStruct nor;
                 NormalTag::Get(normal_handle, i, nor);
@@ -587,25 +616,26 @@ aiMesh* C4DImporter::ReadMesh(BaseObject* object) {
     }
 
     mesh->mMaterialIndex = ResolveMaterial(polyObject);
-
     return mesh.release();
 }
 
+
 // ------------------------------------------------------------------------------------------------
-unsigned int C4DImporter::ResolveMaterial(PolygonObject* obj) {
-    ai_assert(obj != nullptr);
+unsigned int C4DImporter::ResolveMaterial(PolygonObject* obj)
+{
+    ai_assert(obj != NULL);
 
     const unsigned int mat_count = static_cast<unsigned int>(materials.size());
 
     BaseTag* tag = obj->GetTag(Ttexture);
-    if(tag == nullptr) {
+    if(tag == NULL) {
         return mat_count;
     }
 
     TextureTag& ttag = dynamic_cast<TextureTag&>(*tag);
 
     BaseMaterial* const mat = ttag.GetMaterial();
-    ai_assert(mat != nullptr);
+    ai_assert(mat != NULL);
 
     const MaterialMap::const_iterator it = material_mapping.find(mat);
     if(it == material_mapping.end()) {
@@ -613,7 +643,6 @@ unsigned int C4DImporter::ResolveMaterial(PolygonObject* obj) {
     }
 
     ai_assert((*it).second < mat_count);
-
     return (*it).second;
 }
 

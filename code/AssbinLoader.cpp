@@ -3,7 +3,7 @@
 Open Asset Import Library (assimp)
 ---------------------------------------------------------------------------
 
-Copyright (c) 2006-2019, assimp team
+Copyright (c) 2006-2018, assimp team
 
 
 
@@ -68,7 +68,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 using namespace Assimp;
 
 static const aiImporterDesc desc = {
-    "Assimp Binary Importer",
+    ".assbin Importer",
     "Gargaj / Conspiracy",
     "",
     "",
@@ -708,7 +708,7 @@ void AssbinImporter::InternReadFile( const std::string& pFile, aiScene* pScene, 
 
         unsigned char * uncompressedData = new unsigned char[ uncompressedSize ];
 
-        int res = uncompress( uncompressedData, &uncompressedSize, compressedData, (uLong) len );
+        int res = uncompress( uncompressedData, &uncompressedSize, compressedData, len );
         if(res != Z_OK)
         {
             delete [] uncompressedData;

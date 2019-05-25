@@ -2,7 +2,7 @@
 Open Asset Import Library (assimp)
 ----------------------------------------------------------------------
 
-Copyright (c) 2006-2019, assimp team
+Copyright (c) 2006-2018, assimp team
 
 
 All rights reserved.
@@ -62,7 +62,7 @@ using namespace Util;
 
 // ------------------------------------------------------------------------------------------------
 Geometry::Geometry(uint64_t id, const Element& element, const std::string& name, const Document& doc)
-    : Object(id, element, name)
+    : Object(id, element,name)
     , skin()
 {
     const std::vector<const Connection*>& conns = doc.GetConnectionsByDestinationSequenced(ID(),"Deformer");
@@ -70,13 +70,11 @@ Geometry::Geometry(uint64_t id, const Element& element, const std::string& name,
         const Skin* const sk = ProcessSimpleConnection<Skin>(*con, false, "Skin -> Geometry", element);
         if(sk) {
             skin = sk;
-        }
-        const BlendShape* const bsp = ProcessSimpleConnection<BlendShape>(*con, false, "BlendShape -> Geometry", element);
-        if (bsp) {
-            blendShapes.push_back(bsp);
+            break;
         }
     }
 }
+
 
 // ------------------------------------------------------------------------------------------------
 Geometry::~Geometry()
@@ -84,12 +82,6 @@ Geometry::~Geometry()
     // empty
 }
 
-// ------------------------------------------------------------------------------------------------
-const std::vector<const BlendShape*>& Geometry::GetBlendShapes() const {
-    return blendShapes;
-}
-
-// ------------------------------------------------------------------------------------------------
 const Skin* Geometry::DeformerSkin() const {
     return skin;
 }
@@ -240,6 +232,7 @@ const std::vector<aiColor4D>& MeshGeometry::GetVertexColors( unsigned int index 
 const MatIndexArray& MeshGeometry::GetMaterialIndices() const {
     return m_materials;
 }
+
 // ------------------------------------------------------------------------------------------------
 const unsigned int* MeshGeometry::ToOutputVertexIndex( unsigned int in_index, unsigned int& count ) const {
     if ( in_index >= m_mapping_counts.size() ) {
@@ -568,15 +561,15 @@ void MeshGeometry::ReadVertexDataColors(std::vector<aiColor4D>& colors_out, cons
 }
 
 // ------------------------------------------------------------------------------------------------
-static const char *TangentIndexToken = "TangentIndex";
-static const char *TangentsIndexToken = "TangentsIndex";
+static const std::string TangentIndexToken = "TangentIndex";
+static const std::string TangentsIndexToken = "TangentsIndex";
 
 void MeshGeometry::ReadVertexDataTangents(std::vector<aiVector3D>& tangents_out, const Scope& source,
     const std::string& MappingInformationType,
     const std::string& ReferenceInformationType)
 {
     const char * str = source.Elements().count( "Tangents" ) > 0 ? "Tangents" : "Tangent";
-    const char * strIdx = source.Elements().count( "Tangents" ) > 0 ? TangentsIndexToken : TangentIndexToken;
+    const char * strIdx = source.Elements().count( "Tangents" ) > 0 ? TangentsIndexToken.c_str() : TangentIndexToken.c_str();
     ResolveVertexDataArray(tangents_out,source,MappingInformationType,ReferenceInformationType,
         str,
         strIdx,
@@ -630,11 +623,10 @@ void MeshGeometry::ReadVertexDataMaterials(std::vector<int>& materials_out, cons
             materials_out.clear();
         }
 
-        materials_out.resize(m_vertices.size());
-        std::fill(materials_out.begin(), materials_out.end(), materials_out.at(0));
+        m_materials.assign(m_vertices.size(),materials_out[0]);
     }
     else if (MappingInformationType == "ByPolygon" && ReferenceInformationType == "IndexToDirect") {
-        materials_out.resize(face_count);
+        m_materials.resize(face_count);
 
         if(materials_out.size() != face_count) {
             FBXImporter::LogError(Formatter::format("length of input data unexpected for ByPolygon mapping: ")
@@ -648,65 +640,9 @@ void MeshGeometry::ReadVertexDataMaterials(std::vector<int>& materials_out, cons
             << MappingInformationType << "," << ReferenceInformationType);
     }
 }
-// ------------------------------------------------------------------------------------------------
-ShapeGeometry::ShapeGeometry(uint64_t id, const Element& element, const std::string& name, const Document& doc)
-    : Geometry(id, element, name, doc)
-{
-    const Scope* sc = element.Compound();
-    if (!sc) {
-        DOMError("failed to read Geometry object (class: Shape), no data scope found");
-    }
-    const Element& Indexes = GetRequiredElement(*sc, "Indexes", &element);
-    const Element& Normals = GetRequiredElement(*sc, "Normals", &element);
-    const Element& Vertices = GetRequiredElement(*sc, "Vertices", &element);
-    ParseVectorDataArray(m_indices, Indexes);
-    ParseVectorDataArray(m_vertices, Vertices);
-    ParseVectorDataArray(m_normals, Normals);
-}
 
-// ------------------------------------------------------------------------------------------------
-ShapeGeometry::~ShapeGeometry() {
-    // empty
-}
-// ------------------------------------------------------------------------------------------------
-const std::vector<aiVector3D>& ShapeGeometry::GetVertices() const {
-    return m_vertices;
-}
-// ------------------------------------------------------------------------------------------------
-const std::vector<aiVector3D>& ShapeGeometry::GetNormals() const {
-    return m_normals;
-}
-// ------------------------------------------------------------------------------------------------
-const std::vector<unsigned int>& ShapeGeometry::GetIndices() const {
-    return m_indices;
-}
-// ------------------------------------------------------------------------------------------------
-LineGeometry::LineGeometry(uint64_t id, const Element& element, const std::string& name, const Document& doc)
-    : Geometry(id, element, name, doc)
-{
-    const Scope* sc = element.Compound();
-    if (!sc) {
-        DOMError("failed to read Geometry object (class: Line), no data scope found");
-    }
-    const Element& Points = GetRequiredElement(*sc, "Points", &element);
-    const Element& PointsIndex = GetRequiredElement(*sc, "PointsIndex", &element);
-    ParseVectorDataArray(m_vertices, Points);
-    ParseVectorDataArray(m_indices, PointsIndex);
-}
-
-// ------------------------------------------------------------------------------------------------
-LineGeometry::~LineGeometry() {
-    // empty
-}
-// ------------------------------------------------------------------------------------------------
-const std::vector<aiVector3D>& LineGeometry::GetVertices() const {
-    return m_vertices;
-}
-// ------------------------------------------------------------------------------------------------
-const std::vector<int>& LineGeometry::GetIndices() const {
-    return m_indices;
-}
 } // !FBX
 } // !Assimp
+
 #endif
 

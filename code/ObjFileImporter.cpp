@@ -3,7 +3,7 @@
 Open Asset Import Library (assimp)
 ---------------------------------------------------------------------------
 
-Copyright (c) 2006-2019, assimp team
+Copyright (c) 2006-2018, assimp team
 
 
 
@@ -143,6 +143,38 @@ void ObjFileImporter::InternReadFile( const std::string &file, aiScene* pScene, 
     } else {
         modelName = file;
     }
+
+    // This next stage takes ~ 1/3th of the total readFile task
+    // so should amount for 1/3th of the progress
+    // only update every 100KB or it'll be too slow
+    /*unsigned int progress = 0;
+    unsigned int progressCounter = 0;
+    const unsigned int updateProgressEveryBytes = 100 * 1024;
+    const unsigned int progressTotal = static_cast<unsigned int>(3*m_Buffer.size()/updateProgressEveryBytes);*/
+    // process all '\'
+    /*std::vector<char> ::iterator iter = m_Buffer.begin();
+    while (iter != m_Buffer.end())
+    {
+        if (*iter == '\\')
+        {
+            // remove '\'
+            iter = m_Buffer.erase(iter);
+            // remove next character
+            while (*iter == '\r' || *iter == '\n')
+                iter = m_Buffer.erase(iter);
+        }
+        else
+            ++iter;
+
+        if (++progressCounter >= updateProgressEveryBytes)
+        {
+            m_progress->UpdateFileRead(++progress, progressTotal);
+            progressCounter = 0;
+        }
+    }*/
+
+    // 1/3rd progress
+    m_progress->UpdateFileRead(1, 3);
 
     // parse the file into a temporary representation
     ObjFileParser parser( streamedBuffer, modelName, pIOHandler, m_progress, file);
@@ -442,12 +474,11 @@ void ObjFileImporter::createVertexArray(const ObjFile::Model* pModel,
     // Allocate buffer for texture coordinates
     if ( !pModel->m_TextureCoord.empty() && pObjMesh->m_uiUVCoordinates[0] )
     {
-        pMesh->mNumUVComponents[ 0 ] = pModel->m_TextureCoordDim;
+        pMesh->mNumUVComponents[ 0 ] = 2;
         pMesh->mTextureCoords[ 0 ] = new aiVector3D[ pMesh->mNumVertices ];
     }
 
     // Copy vertices, normals and textures into aiMesh instance
-    bool normalsok = true, uvok = true;
     unsigned int newIndex = 0, outIndex = 0;
     for ( size_t index=0; index < pObjMesh->m_Faces.size(); index++ ) {
         // Get source face
@@ -467,16 +498,12 @@ void ObjFileImporter::createVertexArray(const ObjFile::Model* pModel,
             pMesh->mVertices[ newIndex ] = pModel->m_Vertices[ vertex ];
 
             // Copy all normals
-            if ( normalsok && !pModel->m_Normals.empty() && vertexIndex < pSourceFace->m_normals.size()) {
+            if ( !pModel->m_Normals.empty() && vertexIndex < pSourceFace->m_normals.size()) {
                 const unsigned int normal = pSourceFace->m_normals.at( vertexIndex );
-                if ( normal >= pModel->m_Normals.size() )
-                {
-                    normalsok = false;
+                if ( normal >= pModel->m_Normals.size() ) {
+                    throw DeadlyImportError( "OBJ: vertex normal index out of range" );
                 }
-                else
-                {
-                    pMesh->mNormals[ newIndex ] = pModel->m_Normals[ normal ];
-                }
+                pMesh->mNormals[ newIndex ] = pModel->m_Normals[ normal ];
             }
 
             // Copy all vertex colors
@@ -487,19 +514,15 @@ void ObjFileImporter::createVertexArray(const ObjFile::Model* pModel,
             }
 
             // Copy all texture coordinates
-            if ( uvok && !pModel->m_TextureCoord.empty() && vertexIndex < pSourceFace->m_texturCoords.size())
+            if ( !pModel->m_TextureCoord.empty() && vertexIndex < pSourceFace->m_texturCoords.size())
             {
                 const unsigned int tex = pSourceFace->m_texturCoords.at( vertexIndex );
 
                 if ( tex >= pModel->m_TextureCoord.size() )
-                {
-                    uvok = false;
-                }
-                else
-                {
-                    const aiVector3D &coord3d = pModel->m_TextureCoord[ tex ];
-                    pMesh->mTextureCoords[ 0 ][ newIndex ] = aiVector3D( coord3d.x, coord3d.y, coord3d.z );
-                }
+                    throw DeadlyImportError("OBJ: texture coordinate index out of range");
+
+                const aiVector3D &coord3d = pModel->m_TextureCoord[ tex ];
+                pMesh->mTextureCoords[ 0 ][ newIndex ] = aiVector3D( coord3d.x, coord3d.y, coord3d.z );
             }
 
             // Get destination face
@@ -542,18 +565,6 @@ void ObjFileImporter::createVertexArray(const ObjFile::Model* pModel,
             }
             ++newIndex;
         }
-    }
-
-    if (!normalsok)
-    {
-        delete [] pMesh->mNormals;
-        pMesh->mNormals = nullptr;
-    }
-
-    if (!uvok)
-    {
-        delete [] pMesh->mTextureCoords[0];
-        pMesh->mTextureCoords[0] = nullptr;
     }
 }
 

@@ -3,7 +3,7 @@
 Open Asset Import Library (assimp)
 ---------------------------------------------------------------------------
 
-Copyright (c) 2006-2019, assimp team
+Copyright (c) 2006-2018, assimp team
 
 
 
@@ -288,7 +288,7 @@ void Exporter::SetProgressHandler(ProgressHandler* pHandler) {
 
 // ------------------------------------------------------------------------------------------------
 const aiExportDataBlob* Exporter::ExportToBlob( const aiScene* pScene, const char* pFormatId,
-                                                unsigned int pPreprocessing, const ExportProperties* pProperties) {
+                                                unsigned int, const ExportProperties* /*pProperties*/ ) {
     if (pimpl->blob) {
         delete pimpl->blob;
         pimpl->blob = nullptr;
@@ -298,7 +298,7 @@ const aiExportDataBlob* Exporter::ExportToBlob( const aiScene* pScene, const cha
     BlobIOSystem* blobio = new BlobIOSystem();
     pimpl->mIOSystem = std::shared_ptr<IOSystem>( blobio );
 
-    if (AI_SUCCESS != Export(pScene,pFormatId,blobio->GetMagicFileName(), pPreprocessing, pProperties)) {
+    if (AI_SUCCESS != Export(pScene,pFormatId,blobio->GetMagicFileName())) {
         pimpl->mIOSystem = old;
         return nullptr;
     }

@@ -3,7 +3,7 @@
 Open Asset Import Library (assimp)
 ---------------------------------------------------------------------------
 
-Copyright (c) 2006-2019, assimp team
+Copyright (c) 2006-2018, assimp team
 
 
 
@@ -1299,7 +1299,7 @@ void ASEImporter::BuildMaterialIndices()
         }
     }
 
-    // Delete our temporary array
+    // Dekete our temporary array
     delete[] pcIntMaterials;
 }
 

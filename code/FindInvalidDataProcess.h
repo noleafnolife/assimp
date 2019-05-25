@@ -2,7 +2,7 @@
 Open Asset Import Library (assimp)
 ----------------------------------------------------------------------
 
-Copyright (c) 2006-2019, assimp team
+Copyright (c) 2006-2018, assimp team
 
 
 All rights reserved.
@@ -41,8 +41,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 /** @file Defines a post processing step to search an importer's output
- *   for data that is obviously invalid
- */
+    for data that is obviously invalid  */
 #ifndef AI_FINDINVALIDDATA_H_INC
 #define AI_FINDINVALIDDATA_H_INC
 
@@ -51,9 +50,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <assimp/anim.h>
 
 struct aiMesh;
-
 class FindInvalidDataProcessTest;
-
 namespace Assimp    {
 
 // ---------------------------------------------------------------------------
@@ -62,10 +59,14 @@ namespace Assimp    {
  *
  *  Originally this was a workaround for some models written by Blender
  *  which have zero normal vectors. */
-class ASSIMP_API FindInvalidDataProcess : public BaseProcess {
+class ASSIMP_API FindInvalidDataProcess : public BaseProcess
+{
 public:
+
     FindInvalidDataProcess();
     ~FindInvalidDataProcess();
+
+public:
 
     // -------------------------------------------------------------------
     //
@@ -79,25 +80,26 @@ public:
     // Run the step
     void Execute( aiScene* pScene);
 
+public:
+
     // -------------------------------------------------------------------
-    /** Executes the post-processing step on the given mesh
+    /** Executes the postprocessing step on the given mesh
      * @param pMesh The mesh to process.
      * @return 0 - nothing, 1 - removed sth, 2 - please delete me  */
     int ProcessMesh( aiMesh* pMesh);
 
     // -------------------------------------------------------------------
-    /** Executes the post-processing step on the given animation
+    /** Executes the postprocessing step on the given animation
      * @param anim The animation to process.  */
     void ProcessAnimation (aiAnimation* anim);
 
     // -------------------------------------------------------------------
-    /** Executes the post-processing step on the given anim channel
+    /** Executes the postprocessing step on the given anim channel
      * @param anim The animation channel to process.*/
     void ProcessAnimationChannel (aiNodeAnim* anim);
 
 private:
     ai_real configEpsilon;
-    bool mIgnoreTexCoods;
 };
 
 } // end of namespace Assimp

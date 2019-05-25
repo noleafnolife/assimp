@@ -43,8 +43,7 @@
 """Parse an EXPRESS file and extract basic information on all
 entities and data types contained"""
 
-import sys
-import re
+import sys, os, re
 from collections import OrderedDict
 
 re_match_entity = re.compile(r"""

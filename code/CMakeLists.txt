@@ -1,7 +1,7 @@
 # Open Asset Import Library (assimp)
 # ----------------------------------------------------------------------
 #
-# Copyright (c) 2006-2019, assimp team
+# Copyright (c) 2006-2018, assimp team
 
 
 # All rights reserved.
@@ -46,11 +46,6 @@
 #
 cmake_minimum_required( VERSION 2.6 )
 SET( HEADER_PATH ../include/assimp )
-
-if(NOT ANDROID AND ASSIMP_ANDROID_JNIIOSYSTEM)
-    message(WARNING "Requesting Android JNI I/O-System in non-Android toolchain. Resetting ASSIMP_ANDROID_JNIIOSYSTEM to OFF.")
-    set(ASSIMP_ANDROID_JNIIOSYSTEM OFF)
-endif(NOT ANDROID AND ASSIMP_ANDROID_JNIIOSYSTEM)
 
 SET( COMPILER_HEADERS
   ${HEADER_PATH}/Compiler/pushpack1.h
@@ -145,10 +140,6 @@ SET( Core_SRCS
   Assimp.cpp
 )
 
-IF(MSVC)
-  list(APPEND Core_SRCS "res/assimp.rc")
-ENDIF(MSVC)
-
 SET( Logging_SRCS
   ${HEADER_PATH}/DefaultLogger.hpp
   ${HEADER_PATH}/LogStream.hpp
@@ -220,7 +211,7 @@ ENDIF ( ASSIMP_BUILD_NONFREE_C4D_IMPORTER )
 # ASSIMP_BUILD_XXX_IMPORTER to FALSE for each importer
 # if this variable is set to FALSE, the user can manually enable importers by setting
 # ASSIMP_BUILD_XXX_IMPORTER to TRUE for each importer
-OPTION(ASSIMP_BUILD_ALL_IMPORTERS_BY_DEFAULT "default value of all ASSIMP_BUILD_XXX_IMPORTER values" TRUE)
+OPTION(ASSIMP_BUILD_ALL_IMPORTERS_BY_DEFAULT "default value of all ASSIMP_BUILD_XXX_IMPORTER value" TRUE)
 
 # macro to add the CMake Option ADD_ASSIMP_IMPORTER_<name> which enables compile of loader
 # this way selective loaders can be compiled (reduces filesize + compile time)
@@ -236,51 +227,19 @@ MACRO(ADD_ASSIMP_IMPORTER name)
   IF (ASSIMP_IMPORTER_ENABLED)
     LIST(APPEND ASSIMP_LOADER_SRCS ${ARGN})
     SET(ASSIMP_IMPORTERS_ENABLED "${ASSIMP_IMPORTERS_ENABLED} ${name}")
+    SET(${name}_SRCS ${ARGN})
     SOURCE_GROUP(${name} FILES ${ARGN})
   ELSE()
     SET(${name}_SRC "")
     SET(ASSIMP_IMPORTERS_DISABLED "${ASSIMP_IMPORTERS_DISABLED} ${name}")
     add_definitions(-DASSIMP_BUILD_NO_${name}_IMPORTER)
-  ENDIF()
-ENDMACRO()
-
-# if this variable is set to TRUE, the user can manually disable exporters by setting
-# ASSIMP_BUILD_XXX_EXPORTER to FALSE for each exporter
-# if this variable is set to FALSE, the user can manually enable exporters by setting
-# ASSIMP_BUILD_XXX_EXPORTER to TRUE for each exporter
-OPTION(ASSIMP_BUILD_ALL_EXPORTERS_BY_DEFAULT "default value of all ASSIMP_BUILD_XXX_EXPORTER values" TRUE)
-
-# macro to add the CMake Option ADD_ASSIMP_IMPORTER_<name> which enables compile of loader
-# this way selective loaders can be compiled (reduces filesize + compile time)
-MACRO(ADD_ASSIMP_EXPORTER name)
-  IF (ASSIMP_NO_EXPORT)
-	set(ASSIMP_EXPORTER_ENABLED FALSE)
-  ELSEIF (ASSIMP_BUILD_ALL_EXPORTERS_BY_DEFAULT)
-    set(ASSIMP_EXPORTER_ENABLED TRUE)
-    IF (DEFINED ASSIMP_BUILD_${name}_EXPORTER AND NOT ASSIMP_BUILD_${name}_EXPORTER)
-      set(ASSIMP_EXPORTER_ENABLED FALSE)
-    ENDIF ()
-  ELSE ()
-    set(ASSIMP_EXPORTER_ENABLED ${ASSIMP_BUILD_${name}_EXPORTER})
-  ENDIF ()
-  
-  IF (ASSIMP_EXPORTER_ENABLED)
-    SET(ASSIMP_EXPORTERS_ENABLED "${ASSIMP_EXPORTERS_ENABLED} ${name}")
-	LIST(APPEND ASSIMP_EXPORTER_SRCS ${ARGN})
-    SOURCE_GROUP(${name}_EXPORTER FILES ${ARGN})
-  ELSE()
-    SET(ASSIMP_EXPORTERS_DISABLED "${ASSIMP_EXPORTERS_DISABLED} ${name}")
     add_definitions(-DASSIMP_BUILD_NO_${name}_EXPORTER)
   ENDIF()
 ENDMACRO()
 
 SET(ASSIMP_LOADER_SRCS "")
 SET(ASSIMP_IMPORTERS_ENABLED "") # list of enabled importers
-SET(ASSIMP_IMPORTERS_DISABLED "") # disabled importers list (used to print)
-
-SET(ASSIMP_EXPORTER_SRCS "")
-SET(ASSIMP_EXPORTERS_ENABLED "") # list of enabled exporters
-SET(ASSIMP_EXPORTERS_DISABLED "") # disabled exporters list (used to print)
+SET(ASSIMP_IMPORTERS_DISABLED "") # disabled list (used to print)
 
 ADD_ASSIMP_IMPORTER( AMF
   AMFImporter.hpp
@@ -297,9 +256,6 @@ ADD_ASSIMP_IMPORTER( 3DS
   3DSHelper.h
   3DSLoader.cpp
   3DSLoader.h
-)
-
-ADD_ASSIMP_EXPORTER( 3DS
   3DSExporter.h
   3DSExporter.cpp
 )
@@ -317,13 +273,10 @@ ADD_ASSIMP_IMPORTER( ASE
 )
 
 ADD_ASSIMP_IMPORTER( ASSBIN
-  AssbinLoader.h
-  AssbinLoader.cpp
-)
-
-ADD_ASSIMP_EXPORTER( ASSBIN
   AssbinExporter.h
   AssbinExporter.cpp
+  AssbinLoader.h
+  AssbinLoader.cpp
 )
 
 ADD_ASSIMP_IMPORTER( ASSXML
@@ -347,9 +300,6 @@ ADD_ASSIMP_IMPORTER( COLLADA
   ColladaLoader.h
   ColladaParser.cpp
   ColladaParser.h
-)
-
-ADD_ASSIMP_EXPORTER( COLLADA
   ColladaExporter.h
   ColladaExporter.cpp
 )
@@ -466,9 +416,6 @@ ADD_ASSIMP_IMPORTER( OBJ
   ObjFileParser.cpp
   ObjFileParser.h
   ObjTools.h
-)
-
-ADD_ASSIMP_EXPORTER( OBJ
   ObjExporter.h
   ObjExporter.cpp
 )
@@ -487,14 +434,11 @@ ADD_ASSIMP_IMPORTER( OGRE
 )
 
 ADD_ASSIMP_IMPORTER( OPENGEX
+  OpenGEXExporter.cpp
+  OpenGEXExporter.h
   OpenGEXImporter.cpp
   OpenGEXImporter.h
   OpenGEXStructs.h
-)
-
-ADD_ASSIMP_EXPORTER( OPENGEX
-  OpenGEXExporter.cpp
-  OpenGEXExporter.h
 )
 
 ADD_ASSIMP_IMPORTER( PLY
@@ -502,9 +446,6 @@ ADD_ASSIMP_IMPORTER( PLY
   PlyLoader.h
   PlyParser.cpp
   PlyParser.h
-)
-
-ADD_ASSIMP_EXPORTER( PLY
   PlyExporter.cpp
   PlyExporter.h
 )
@@ -595,16 +536,13 @@ ADD_ASSIMP_IMPORTER( FBX
   FBXDeformer.cpp
   FBXBinaryTokenizer.cpp
   FBXDocumentUtil.cpp
-  FBXCommon.h
-)
-
-ADD_ASSIMP_EXPORTER( FBX
   FBXExporter.h
   FBXExporter.cpp
   FBXExportNode.h
   FBXExportNode.cpp
   FBXExportProperty.h
   FBXExportProperty.cpp
+  FBXCommon.h
 )
 
 SET( PostProcessing_SRCS
@@ -704,9 +642,6 @@ ADD_ASSIMP_IMPORTER( SMD
 ADD_ASSIMP_IMPORTER( STL
   STLLoader.cpp
   STLLoader.h
-)
-
-ADD_ASSIMP_EXPORTER( STL
   STLExporter.h
   STLExporter.cpp
 )
@@ -727,14 +662,13 @@ ADD_ASSIMP_IMPORTER( X
   XFileImporter.h
   XFileParser.cpp
   XFileParser.h
-)
-
-ADD_ASSIMP_EXPORTER( X
   XFileExporter.h
   XFileExporter.cpp
 )
 
 ADD_ASSIMP_IMPORTER( X3D
+  X3DExporter.cpp
+  X3DExporter.hpp
   X3DImporter.cpp
   X3DImporter.hpp
   X3DImporter_Geometry2D.cpp
@@ -754,11 +688,6 @@ ADD_ASSIMP_IMPORTER( X3D
   X3DVocabulary.cpp
 )
 
-ADD_ASSIMP_EXPORTER( X3D
-  X3DExporter.cpp
-  X3DExporter.hpp
-)
-
 ADD_ASSIMP_IMPORTER( GLTF
   glTFAsset.h
   glTFAsset.inl
@@ -766,32 +695,26 @@ ADD_ASSIMP_IMPORTER( GLTF
   glTFAssetWriter.inl
   glTFImporter.cpp
   glTFImporter.h
+  glTFExporter.h
+  glTFExporter.cpp
   glTF2Asset.h
   glTF2Asset.inl
   glTF2AssetWriter.h
   glTF2AssetWriter.inl
   glTF2Importer.cpp
   glTF2Importer.h
-)
-
-ADD_ASSIMP_EXPORTER( GLTF
-  glTFExporter.h
-  glTFExporter.cpp
   glTF2Exporter.h
   glTF2Exporter.cpp
 )
 
 ADD_ASSIMP_IMPORTER( 3MF
-	D3MFImporter.h
+    D3MFImporter.h
     D3MFImporter.cpp
-	D3MFOpcPackage.h
-    D3MFOpcPackage.cpp
-    3MFXmlTags.h
-)
-
-ADD_ASSIMP_EXPORTER( 3MF
     D3MFExporter.h
     D3MFExporter.cpp
+    D3MFOpcPackage.h
+    D3MFOpcPackage.cpp
+    3MFXmlTags.h
 )
 
 ADD_ASSIMP_IMPORTER( MMD
@@ -804,19 +727,7 @@ ADD_ASSIMP_IMPORTER( MMD
   MMDVmdParser.h
 )
 
-# Workaround for issue #2406 - force problematic large file to be optimized to prevent string table overflow error
-# Used -Os instead of -O2 as previous issues had mentioned, since -Os is roughly speaking -O2, excluding any
-# optimizations that take up extra space. Given that the issue is a string table overflowing, -Os seemed appropriate
-# Also, I'm not positive if both link & compile flags are needed, but this hopefully ensures that the issue should not
-# recur for edge cases such as static builds.
-if ((CMAKE_COMPILER_IS_MINGW) AND (CMAKE_BUILD_TYPE MATCHES Debug))
-  message("-- Applying MinGW StepFileGen1.cpp Debug Workaround")
-  SET_SOURCE_FILES_PROPERTIES(Importer/StepFile/StepFileGen1.cpp PROPERTIES COMPILE_FLAGS -Os )
-  SET_SOURCE_FILES_PROPERTIES(Importer/StepFile/StepFileGen1.cpp PROPERTIES LINK_FLAGS -Os )
-  SET_SOURCE_FILES_PROPERTIES(Importer/StepFile/StepFileGen1.cpp PROPERTIES STATIC_LIBRARY_FLAGS -Os )
-endif()
-
-ADD_ASSIMP_IMPORTER( STEP
+SET( Step_SRCS
     STEPFile.h
     Importer/StepFile/StepFileImporter.h
     Importer/StepFile/StepFileImporter.cpp
@@ -824,32 +735,29 @@ ADD_ASSIMP_IMPORTER( STEP
     Importer/StepFile/StepFileGen2.cpp
     Importer/StepFile/StepFileGen3.cpp
     Importer/StepFile/StepReaderGen.h
-)
-
-ADD_ASSIMP_EXPORTER( STEP
     StepExporter.h
     StepExporter.cpp
 )
+SOURCE_GROUP( Step FILES ${Step_SRCS})
 
-if ((NOT ASSIMP_NO_EXPORT) OR (NOT ASSIMP_EXPORTERS_ENABLED STREQUAL ""))
-	SET( Exporter_SRCS
-	  Exporter.cpp
-	  AssimpCExport.cpp
-	  ${HEADER_PATH}/BlobIOSystem.h
-	)
-	SOURCE_GROUP( Exporter FILES ${Exporter_SRCS})
-endif()
+SET( Exporter_SRCS
+  Exporter.cpp
+  AssimpCExport.cpp
+  ${HEADER_PATH}/BlobIOSystem.h
+)
+SOURCE_GROUP( Exporter FILES ${Exporter_SRCS})
 
 SET( Extra_SRCS
   MD4FileData.h
 )
 SOURCE_GROUP( Extra FILES ${Extra_SRCS})
 
+
 SET( Clipper_SRCS
   ../contrib/clipper/clipper.hpp
   ../contrib/clipper/clipper.cpp
 )
-SOURCE_GROUP( Contrib\\Clipper FILES ${Clipper_SRCS})
+SOURCE_GROUP( Clipper FILES ${Clipper_SRCS})
 
 SET( Poly2Tri_SRCS
   ../contrib/poly2tri/poly2tri/common/shapes.cc
@@ -864,7 +772,7 @@ SET( Poly2Tri_SRCS
   ../contrib/poly2tri/poly2tri/sweep/sweep_context.cc
   ../contrib/poly2tri/poly2tri/sweep/sweep_context.h
 )
-SOURCE_GROUP( Contrib\\Poly2Tri FILES ${Poly2Tri_SRCS})
+SOURCE_GROUP( Poly2Tri FILES ${Poly2Tri_SRCS})
 
 SET( unzip_SRCS
   ../contrib/unzip/crypt.h
@@ -873,20 +781,13 @@ SET( unzip_SRCS
   ../contrib/unzip/unzip.c
   ../contrib/unzip/unzip.h
 )
-SOURCE_GROUP(Contrib\\unzip FILES ${unzip_SRCS})
+SOURCE_GROUP( unzip FILES ${unzip_SRCS})
 
 SET( ziplib_SRCS
   ../contrib/zip/src/miniz.h
   ../contrib/zip/src/zip.c
   ../contrib/zip/src/zip.h
 )
-
-# TODO if cmake required version has been updated to >3.12.0, collapse this to the second case only
-if(${CMAKE_VERSION} VERSION_LESS "3.12.0")
-	add_definitions(-DMINIZ_USE_UNALIGNED_LOADS_AND_STORES=0)
-else()
-	add_compile_definitions(MINIZ_USE_UNALIGNED_LOADS_AND_STORES=0)
-endif()
 
 SOURCE_GROUP( ziplib FILES ${ziplib_SRCS} )
 
@@ -905,7 +806,7 @@ SET ( openddl_parser_SRCS
   ../contrib/openddlparser/include/openddlparser/DDLNode.h
   ../contrib/openddlparser/include/openddlparser/Value.h
 )
-SOURCE_GROUP( Contrib\\openddl_parser FILES ${openddl_parser_SRCS})
+SOURCE_GROUP( openddl_parser FILES ${openddl_parser_SRCS})
 
 SET ( open3dgc_SRCS
   ../contrib/Open3DGC/o3dgcAdjacencyInfo.h
@@ -938,7 +839,7 @@ SET ( open3dgc_SRCS
   ../contrib/Open3DGC/o3dgcVector.h
   ../contrib/Open3DGC/o3dgcVector.inl
 )
-SOURCE_GROUP( Contrib\\open3dgc FILES ${open3dgc_SRCS})
+SOURCE_GROUP( open3dgc FILES ${open3dgc_SRCS})
 
 # Check dependencies for glTF importer with Open3DGC-compression.
 # RT-extensions is used in "contrib/Open3DGC/o3dgcTimer.h" for collecting statistics. Pointed file
@@ -978,11 +879,8 @@ else (UNZIP_FOUND)
   INCLUDE_DIRECTORIES( "../contrib/unzip/" )
 endif (UNZIP_FOUND)
 
-MESSAGE(STATUS "Enabled importer formats:${ASSIMP_IMPORTERS_ENABLED}")
-MESSAGE(STATUS "Disabled importer formats:${ASSIMP_IMPORTERS_DISABLED}")
-
-MESSAGE(STATUS "Enabled exporter formats:${ASSIMP_EXPORTERS_ENABLED}")
-MESSAGE(STATUS "Disabled exporter formats:${ASSIMP_EXPORTERS_DISABLED}")
+MESSAGE(STATUS "Enabled formats:${ASSIMP_IMPORTERS_ENABLED}")
+MESSAGE(STATUS "Disabled formats:${ASSIMP_IMPORTERS_DISABLED}")
 
 SET( assimp_src
   # Assimp Files
@@ -993,11 +891,10 @@ SET( assimp_src
   ${PostProcessing_SRCS}
   ${MaterialSystem_SRCS}
   ${STEPParser_SRCS}
-#  ${Step_SRCS} check if we need a different approach
+  ${Step_SRCS}
 
   # Model Support
   ${ASSIMP_LOADER_SRCS}
-  ${ASSIMP_EXPORTER_SRCS}
 
   # Third-party libraries
   ${IrrXML_SRCS}
@@ -1011,6 +908,7 @@ SET( assimp_src
 
   ${PUBLIC_HEADERS}
   ${COMPILER_HEADERS}
+
 )
 ADD_DEFINITIONS( -DOPENDDLPARSER_BUILD )
 
@@ -1035,11 +933,11 @@ TARGET_INCLUDE_DIRECTORIES ( assimp PUBLIC
 
 TARGET_LINK_LIBRARIES(assimp ${ZLIB_LIBRARIES} ${OPENDDL_PARSER_LIBRARIES} ${IRRXML_LIBRARY} )
 
-if(ASSIMP_ANDROID_JNIIOSYSTEM)
+if(ANDROID AND ASSIMP_ANDROID_JNIIOSYSTEM)
   set(ASSIMP_ANDROID_JNIIOSYSTEM_PATH port/AndroidJNI)
   add_subdirectory(../${ASSIMP_ANDROID_JNIIOSYSTEM_PATH}/ ../${ASSIMP_ANDROID_JNIIOSYSTEM_PATH}/)
   target_link_libraries(assimp android_jniiosystem)
-endif(ASSIMP_ANDROID_JNIIOSYSTEM)
+endif(ANDROID AND ASSIMP_ANDROID_JNIIOSYSTEM)
 
 IF (ASSIMP_BUILD_NONFREE_C4D_IMPORTER)
   TARGET_LINK_LIBRARIES(assimp optimized ${C4D_RELEASE_LIBRARIES})
@@ -1049,10 +947,6 @@ ENDIF (ASSIMP_BUILD_NONFREE_C4D_IMPORTER)
 
 if( MSVC )
   # in order to prevent DLL hell, each of the DLLs have to be suffixed with the major version and msvc prefix
-  # CMake 3.12 added a variable for this
-  if(MSVC_TOOLSET_VERSION)
-    set(MSVC_PREFIX "vc${MSVC_TOOLSET_VERSION}")
-  else()
   if( MSVC70 OR MSVC71 )
     set(MSVC_PREFIX "vc70")
   elseif( MSVC80 )
@@ -1067,20 +961,12 @@ if( MSVC )
     set(MSVC_PREFIX "vc120")
   elseif( MSVC14 )
     set(MSVC_PREFIX "vc140")
-  elseif( MSVC15 )
-    set(MSVC_PREFIX "vc141")
   else()
     set(MSVC_PREFIX "vc150")
-  endif()
   endif()
   set(LIBRARY_SUFFIX "${ASSIMP_LIBRARY_SUFFIX}-${MSVC_PREFIX}-mt" CACHE STRING "the suffix for the assimp windows library")
 endif()
 
-if (${CMAKE_SYSTEM_NAME} MATCHES "WindowsStore")
-    target_compile_definitions(assimp PUBLIC WindowsStore)
-    TARGET_LINK_LIBRARIES(assimp advapi32)
-    #set(WindowsStore TRUE)
-endif()
 SET_TARGET_PROPERTIES( assimp PROPERTIES
   VERSION ${ASSIMP_VERSION}
   SOVERSION ${ASSIMP_SOVERSION} # use full version
@@ -1140,16 +1026,6 @@ if (ASSIMP_ANDROID_JNIIOSYSTEM)
 ENDIF(ASSIMP_ANDROID_JNIIOSYSTEM)
 
 if(MSVC AND ASSIMP_INSTALL_PDB)
-  # When only the static library is built, these properties must
-  # be set to ensure the static lib .pdb is staged for installation.
-  IF(NOT BUILD_SHARED_LIBS)
-    SET_TARGET_PROPERTIES( assimp PROPERTIES
-      COMPILE_PDB_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-      COMPILE_PDB_NAME assimp${LIBRARY_SUFFIX}
-      COMPILE_PDB_NAME_DEBUG assimp${LIBRARY_SUFFIX}${CMAKE_DEBUG_POSTFIX}
-    )
-  ENDIF()
-
   IF(CMAKE_GENERATOR MATCHES "^Visual Studio")
     install(FILES ${Assimp_BINARY_DIR}/code/Debug/assimp${LIBRARY_SUFFIX}${CMAKE_DEBUG_POSTFIX}.pdb
       DESTINATION ${ASSIMP_LIB_INSTALL_DIR}
